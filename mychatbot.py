@@ -1,3 +1,4 @@
+import base64
 import logging
 import openai
 import os
@@ -60,6 +61,21 @@ def main():
   # Create cleam button in column 3
   with col5:
     streamlit.button(label = "Clean", on_click = clean_click)
+
+  # Create image file uploader
+  uploaded_file = streamlit.file_uploader(
+    "Upload an image to include in your message",
+    type=["jpg", "jpeg", "png", "gif", "bmp", "webp"],
+    key="image_uploader"
+  )
+  if uploaded_file is not None:
+    image_bytes = uploaded_file.getvalue()
+    streamlit.session_state['uploaded_image'] = base64.b64encode(image_bytes).decode('utf-8')
+    streamlit.session_state['uploaded_image_mime_type'] = uploaded_file.type
+    streamlit.image(uploaded_file, caption="Uploaded image", width=300)
+  else:
+    streamlit.session_state['uploaded_image'] = None
+    streamlit.session_state['uploaded_image_mime_type'] = None
 
   if streamlit.session_state['generated']:
     for i in range(len(streamlit.session_state['generated']) - 1, -1, -1):
@@ -186,6 +202,12 @@ def customize_streamlit_ui():
   if 'user' not in streamlit.session_state:
     streamlit.session_state['user'] = ""
 
+  if 'uploaded_image' not in streamlit.session_state:
+    streamlit.session_state['uploaded_image'] = None
+
+  if 'uploaded_image_mime_type' not in streamlit.session_state:
+    streamlit.session_state['uploaded_image_mime_type'] = None
+
 def refresh_openai_token():
   if streamlit.session_state['openai_token'].expires_on < int(time.time()) - 30 * 60:
       streamlit.session_state['openai_token'] = default_credential.get_token("https://cognitiveservices.azure.com/.default")
@@ -194,7 +216,20 @@ def refresh_openai_token():
 # Send user prompt to Azure OpenAI 
 def generate_response(prompt):
   try:
-    streamlit.session_state['prompts'].append({"role": "user", "content": prompt})
+    if streamlit.session_state.get('uploaded_image'):
+      content = [
+        {"type": "text", "text": prompt},
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": f"data:{streamlit.session_state['uploaded_image_mime_type']};base64,{streamlit.session_state['uploaded_image']}"
+          }
+        }
+      ]
+    else:
+      content = prompt
+
+    streamlit.session_state['prompts'].append({"role": "user", "content": content})
 
     if openai.api_type == "azure_ad":
       refresh_openai_token()
@@ -217,6 +252,8 @@ def clean_click():
   streamlit.session_state['past'] = []
   streamlit.session_state['generated'] = []
   streamlit.session_state['user'] = ""
+  streamlit.session_state['uploaded_image'] = None
+  streamlit.session_state['uploaded_image_mime_type'] = None
 
 # Handle on_change event for user input
 def user_change():
