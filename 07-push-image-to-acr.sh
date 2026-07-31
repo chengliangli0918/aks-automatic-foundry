@@ -3,11 +3,17 @@
 # Variables
 source ./set-variables.sh
 
-# Login to ACR
-az acr login --name $acrName 
+# Step 06 uses ACR Tasks to build and push the image. Verify the expected tag exists.
+remoteTag=$(az acr repository show-tags \
+	--name "$acrName" \
+	--repository "${imageName,,}" \
+	--subscription "$subscriptionId" \
+	--query "[?@=='$tag'] | [0]" \
+	--output tsv)
 
-loginServer=$(az acr show --name $acrName -g $acrResourceGroupName --query loginServer --output tsv)
+if [[ $remoteTag != "$tag" ]]; then
+	echo "Image '$image' was not found in Azure Container Registry"
+	exit 1
+fi
 
-docker tag ${imageName,,}:$tag $loginServer/${imageName,,}:$tag
-
-docker push $loginServer/${imageName,,}:$tag
+echo "Image '$image' is available in Azure Container Registry"

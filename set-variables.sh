@@ -1,15 +1,16 @@
 # Azure Subscription and Tenant
-subscriptionId=$(az account show --query id --output tsv)
-subscriptionName=$(az account show --query name --output tsv)
-tenantId=$(az account show --query tenantId --output tsv)
+subscriptionId="c582d154-33c4-47e4-a3c2-0632d20b12eb"
+az account set --subscription "$subscriptionId"
+subscriptionName=$(az account show --subscription "$subscriptionId" --query name --output tsv)
+tenantId=$(az account show --subscription "$subscriptionId" --query tenantId --output tsv)
 
 # ACR
 acrName="charliliacr"
-acrResourceGroupName="aks-azureopenai"
-location="eastus"
-attachAcr=false
+acrResourceGroupName="aks-foundry"
+location="westus"
+attachAcr=true
 imageName="mychatbot"
-tag="v0"
+tag="v1"
 containerName="mychatbot"
 image="$acrName.azurecr.io/$imageName:$tag"
 imagePullPolicy="IfNotPresent"
@@ -18,18 +19,22 @@ imagePullPolicy="IfNotPresent"
 managedIdentityName="myIdentity"
 federatedIdentityName="myFedIdentity"
 
-# Azure OpenAI
-openAiName="charlili-openai"
-openAiResourceGroupName="aks-azureopenai"
-openAiType="azure_ad"
-openAiBase="https://$openAiName.openai.azure.com/"
-openAiModel="gpt-35-turbo"
-openAiDeployment="gpt-35-turbo"
+# Microsoft Foundry
+foundryName="charlili-foundry"
+foundryResourceGroupName="aks-foundry"
+foundryEndpoint="https://$foundryName.services.ai.azure.com/models"
+foundryModel="gpt-5.4-mini"
+foundryModelVersion="2026-03-17"
+foundryDeployment="gpt-5.4-mini"
+foundrySkuName="GlobalStandard"
+foundrySkuCapacity=10
 
 # AKS Cluster
 aksClusterName="charlili-aks"
-aksResourceGroupName="aks-azureopenai"
+aksResourceGroupName="aks-foundry"
 aksKubeConfigPath="/tmp/kubeconfig"
+aksNodeVmSize="Standard_D2s_v5"
+aksNodeCount=1
 
 # Chatbot Application
 namespace="default"
@@ -38,5 +43,5 @@ deploymentTemplate="deployment.yaml"
 serviceTemplate="service.yaml"
 
 # Chatbot argument
-title="Chatbot running on Azure Kubernetes Service, powered by Azure OpenAI"
+title="Chatbot running on Azure Kubernetes Service, powered by Microsoft Foundry"
 temperature="0.5"

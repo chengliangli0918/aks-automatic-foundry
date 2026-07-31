@@ -3,6 +3,8 @@
 # Variables
 source ./set-variables.sh
 
+az account set --subscription "$subscriptionId"
+
 # Check if the user-assigned managed identity already exists
 echo "Checking if '$managedIdentityName' user-assigned managed identity actually exists in the '$aksResourceGroupName' resource group..."
 
@@ -61,48 +63,64 @@ else
   exit
 fi
 
-# Get the resource id of the Azure OpenAI resource
-openAiId=$(az cognitiveservices account show \
-  --name $openAiName \
-  --resource-group $openAiResourceGroupName \
+modelResourceId=$(az cognitiveservices account show \
+  --name "$foundryName" \
+  --resource-group "$foundryResourceGroupName" \
+  --subscription "$subscriptionId" \
   --query id \
   --output tsv)
 
-if [[ -n $openAiId ]]; then
-  echo "Resource id for the $openAiName' Azure OpenAI resource successfully retrieved"
+if [[ -n $modelResourceId ]]; then
+  echo "Resource id for '$foundryName' successfully retrieved"
 else
-  echo "Failed to retrived the resource id of the $openAiName' Azure OpenAI resource"
+  echo "Failed to retrieve the resource id of '$foundryName'"
   exit -1
 fi
 
-# Assign the Cognitive Services User role on the Azure OpenAI resource to the managed identity
+# Assign the Foundry data-plane role to the managed identity
 role="Cognitive Services User"
-echo "Checking if the '$managedIdentityName' managed identity has been assigned to '$role' role of $openAiName' Azure OpenAI resource..."
-current=$(az role assignment list \
-  --assignee $principalId \
-  --scope $openAiId \
-  --query "[?roleDefinitionName=='$role'].roleDefinitionName" \
-  --output tsv 2>/dev/null)
+echo "Checking if '$managedIdentityName' has the '$role' role on '$foundryName'..."
+roleDefinitionId=$(az role definition list \
+  --name "$role" \
+  --subscription "$subscriptionId" \
+  --query '[0].id' \
+  --output tsv)
+roleAssignmentsUrl="https://management.azure.com$modelResourceId/providers/Microsoft.Authorization/roleAssignments?api-version=2022-04-01"
+current=$(az rest \
+  --method get \
+  --url "$roleAssignmentsUrl" \
+  --query "length(value[?properties.principalId=='$principalId' && properties.roleDefinitionId=='$roleDefinitionId'])" \
+  --output tsv)
 
-if [[ $current == $role ]]; then
-  echo "'$managedIdentityName' managed identity is already assigned to the '$current' role of $openAiName' Azure OpenAI resource"
+if [[ $current -gt 0 ]]; then
+  echo "'$managedIdentityName' already has the '$role' role on '$foundryName'"
 else
-  echo "'$managedIdentityName' managed identity is not assigned to the '$role' role of $openAiName' Azure OpenAI resource"
-  
+  echo "'$managedIdentityName' does not have the '$role' role on '$foundryName'"
+
+  roleAssigned=false
   for i in {1..30}  #take some time to assign role for newly created managed identity to azure resources
   do   
-    echo "Assigning the '$role' role for the '$managedIdentityName' managed identity to $openAiName' Azure OpenAI resource, attempt $i... "
+    echo "Assigning '$role' on '$foundryName', attempt $i..."
     az role assignment create \
-      --assignee $principalId \
+      --assignee-object-id "$principalId" \
+      --assignee-principal-type ServicePrincipal \
       --role "$role" \
-      --scope $openAiId 1>/dev/null
+      --scope "$modelResourceId" \
+      --subscription "$subscriptionId" 1>/dev/null
 
     if [[ $? == 0 ]]; then
-      echo "'$managedIdentityName' managed identity successfully assigned to the '$role' role of $openAiName' Azure OpenAI resource"
+      echo "'$managedIdentityName' successfully assigned the '$role' role on '$foundryName'"
+      roleAssigned=true
       break
     else
-      echo "Failed to assign the '$managedIdentityName' managed identity to the '$role' role of $openAiName' Azure OpenAI resource, will retry"
+      echo "Role assignment failed; retrying"
       sleep 2
     fi
   done
+
+  if [[ $roleAssigned != true ]]; then
+    echo "Role assignment failed. Run this command from your Windows machine:"
+    echo "az role assignment create --assignee-object-id \"$principalId\" --assignee-principal-type ServicePrincipal --role \"$role\" --scope \"$modelResourceId\" --subscription \"$subscriptionId\""
+    exit 1
+  fi
 fi

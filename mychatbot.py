@@ -1,38 +1,28 @@
 import logging
-import openai
 import os
-import sys
-import time
 import streamlit
 
+from azure.ai.inference import ChatCompletionsClient
+from azure.ai.inference.models import AssistantMessage, SystemMessage, UserMessage
 from azure.identity import DefaultAzureCredential
-from dotenv import dotenv_values
-from dotenv import load_dotenv
-from streamlit_chat import message
 
 # Read environment variables
-assistant_profile = """
-I am a chatbot backed by AKS and Azure OpenAi
-"""
-title = os.environ.get("TITLE", "Chatbot backed by AKS and Azure OpenAI")
+assistant_profile = "I am a chatbot running on AKS and backed by Microsoft Foundry."
+title = os.environ.get("TITLE", "Chatbot backed by AKS and Microsoft Foundry")
 image_file_name = os.environ.get("IMAGE_FILE_NAME", "mychatbot.png")
 system = os.environ.get("SYSTEM", assistant_profile)
-api_type = os.environ.get("AZURE_OPENAI_TYPE", "azure")
-api_base = os.getenv("AZURE_OPENAI_BASE")
-api_key = os.getenv("AZURE_OPENAI_KEY")
-api_version = os.environ.get("AZURE_OPENAI_VERSION", "2023-05-15")
-engine = os.getenv("AZURE_OPENAI_DEPLOYMENT")
-model = os.getenv("AZURE_OPENAI_MODEL")
+model_endpoint = os.environ["MODEL_ENDPOINT"]
+model_deployment = os.environ["MODEL_DEPLOYMENT"]
 temperature = float(os.environ.get("TEMPERATURE", 0.5))
-default_credential = None
+credential = DefaultAzureCredential()
+model_client = None
 image_width = 80
 file = open("/etc/hostname", "r")
 hostname = file.read()
 file.close()
 
 def main():
-  # config azure openai
-  configure_azure_openai()
+  configure_model_client()
   
   # customize streanlit ui
   customize_streamlit_ui()
@@ -68,29 +58,18 @@ def main():
        streamlit.markdown("---answered by " + str(hostname))
        streamlit.markdown("""---""")
 
-def configure_azure_openai():
-  # Set default Azure credential
-  default_credential = DefaultAzureCredential() if api_type == "azure_ad" else None
+def configure_model_client():
+  global model_client
 
-  # Authenticate to Azure OpenAI
-  if api_type == "azure":
-    openai.api_key = api_key
-  elif api_type == "azure_ad":
-    openai_token = default_credential.get_token("https://cognitiveservices.azure.com/.default")
-    openai.api_key = openai_token.token
-    if 'openai_token' not in streamlit.session_state:
-      streamlit.session_state['openai_token'] = openai_token
-  else:
-    raise ValueError("Invalid API type. Please set the AZURE_OPENAI_TYPE environment variable to azure or azure_ad.")
-
-  # Configure Azure OpenAI
-  openai.api_type = api_type
-  openai.api_version = api_version
-  openai.api_base = api_base 
+  model_client = ChatCompletionsClient(
+    endpoint=model_endpoint,
+    credential=credential,
+    credential_scopes=["https://ai.azure.com/.default"],
+  )
 
 def customize_streamlit_ui():
   # Customize Streamlit UI using CSS
-  streamlit.set_page_config(page_title='Charlili chatbot on AKS managed AzD bare metals, powered by Azure OpenAI')
+  streamlit.set_page_config(page_title='Chatbot on AKS powered by Microsoft Foundry')
   streamlit.markdown("""
   <style>
 
@@ -186,24 +165,24 @@ def customize_streamlit_ui():
   if 'user' not in streamlit.session_state:
     streamlit.session_state['user'] = ""
 
-def refresh_openai_token():
-  if streamlit.session_state['openai_token'].expires_on < int(time.time()) - 30 * 60:
-      streamlit.session_state['openai_token'] = default_credential.get_token("https://cognitiveservices.azure.com/.default")
-      openai.api_key = streamlit.session_state['openai_token'].token
-
-# Send user prompt to Azure OpenAI 
+# Send the user prompt to the configured model backend.
 def generate_response(prompt):
   try:
     streamlit.session_state['prompts'].append({"role": "user", "content": prompt})
 
-    if openai.api_type == "azure_ad":
-      refresh_openai_token()
-
-    completion = openai.ChatCompletion.create(
-      engine = engine,
-      model = model,
-      messages = streamlit.session_state['prompts'],
-      temperature = temperature,
+    message_types = {
+      "system": SystemMessage,
+      "user": UserMessage,
+      "assistant": AssistantMessage,
+    }
+    messages = [
+      message_types[item["role"]](content=item["content"])
+      for item in streamlit.session_state['prompts']
+    ]
+    completion = model_client.complete(
+      model=model_deployment,
+      messages=messages,
+      temperature=temperature,
     )
     
     message = completion.choices[0].message.content
@@ -227,7 +206,7 @@ def user_change():
       (len(streamlit.session_state['past']) > 0 and chat_input == streamlit.session_state['past'][-1])):
     return
   
-  # Generate response invoking Azure OpenAI LLM
+  # Generate response using the Foundry model deployment.
   if chat_input !=  '':
     output = generate_response(chat_input)
     

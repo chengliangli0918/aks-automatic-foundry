@@ -29,6 +29,9 @@ if [[ $? != 0 ]]; then
     --subscription $subscriptionId \
     --enable-oidc-issuer \
     --enable-workload-identity \
+    --node-vm-size "$aksNodeVmSize" \
+    --node-count "$aksNodeCount" \
+    --ssh-access disabled \
     --generate-ssh-keys 1>/dev/null
 
   if [[ $? == 0 ]]; then
