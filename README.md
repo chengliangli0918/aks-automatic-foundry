@@ -10,21 +10,24 @@ products:
 - azure-ai-foundry
 - azure-kubernetes-service
 - azure-container-registry
-name: Run a Microsoft Foundry chatbot on AKS with workload identity
-description: Provision Microsoft Foundry model serving and call it from AKS without secrets.
+name: Run a Microsoft Foundry chatbot on AKS Automatic with workload identity
+description: Provision AKS Automatic and Microsoft Foundry model serving, then call it from AKS without secrets.
 ---
 
-# Microsoft Foundry chatbot on AKS
+# Microsoft Foundry chatbot on AKS Automatic
 
-This sample provisions an AKS cluster with OIDC and workload identity, a Microsoft Foundry resource with a chat model deployment, and a Streamlit chatbot. The pod exchanges its projected Kubernetes service-account token for a Microsoft Entra token; no model API key is stored in Kubernetes.
+This sample provisions an AKS Automatic cluster, a Microsoft Foundry resource with a chat model deployment, and a Streamlit chatbot. AKS Automatic provides a managed cluster configuration with node provisioning, scaling, and workload identity enabled by default. The pod exchanges its projected Kubernetes service-account token for a Microsoft Entra token; no model API key is stored in Kubernetes.
 
-The configured subscription is `c582d154-33c4-47e4-a3c2-0632d20b12eb`. Resource names, location, model, and capacity are defined in `set-variables.sh`. Foundry account names are globally unique, so change `foundryName` if the configured name is unavailable.
+The configured subscription is `c582d154-33c4-47e4-a3c2-0632d20b12eb`, and resources are created in `eastus2` under `charlili-rg`. Resource names, location, model, and capacity are defined in `set-variables.sh`. Foundry account and registry names are globally unique, so change them if the configured names are unavailable.
 
 ## Prerequisites
 
 - Azure CLI authenticated with permission to create AKS, ACR, Cognitive Services, managed identities, federated credentials, and role assignments
-- `kubectl`, `yq` v4, and Docker
+- Azure CLI support for `az aks create --sku automatic`
+- `kubectl` and `yq`
 - Azure AI model access and quota for the model, region, SKU, and capacity configured in `set-variables.sh`
+
+Local Docker is not required. Script `06` uses an Azure Container Registry cloud build to build and push the image. Docker is needed only for the optional local `debug-mychatbot.sh` workflow.
 
 ## Deploy with Microsoft Foundry
 
@@ -40,6 +43,8 @@ Run the scripts from the repository root in this order:
 ./07-push-image-to-acr.sh
 ./08-deploy-mychatbot.sh
 ```
+
+Script `01` creates the cluster with the AKS Automatic SKU and disables SSH access. AKS Automatic selects and manages compute capacity rather than using a fixed node VM size or node count from this repository. Scripts `04` and `05` connect the Kubernetes service account to a user-assigned managed identity and authorize it to call Foundry.
 
 Get the public endpoint after the load balancer is ready:
 

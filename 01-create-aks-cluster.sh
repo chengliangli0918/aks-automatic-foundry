@@ -19,7 +19,7 @@ az aks show \
 
 if [[ $? != 0 ]]; then
   echo "No AKS '$aksClusterName' actually exists in the '$aksResourceGroupName' resource group"
-  echo "Creating AKS cluster '$aksClusterName' in the '$aksResourceGroupName' resource group..."
+  echo "Creating AKS Automatic cluster '$aksClusterName' in the '$aksResourceGroupName' resource group..."
 
   # Create the AKS
   az aks create \
@@ -27,12 +27,8 @@ if [[ $? != 0 ]]; then
     --resource-group $aksResourceGroupName \
     --location $location \
     --subscription $subscriptionId \
-    --enable-oidc-issuer \
-    --enable-workload-identity \
-    --node-vm-size "$aksNodeVmSize" \
-    --node-count "$aksNodeCount" \
-    --ssh-access disabled \
-    --generate-ssh-keys 1>/dev/null
+    --sku automatic \
+    --no-ssh-access 1>/dev/null
 
   if [[ $? == 0 ]]; then
     echo "AKS '$aksClusterName' successfully created in the '$aksResourceGroupName' resource group"

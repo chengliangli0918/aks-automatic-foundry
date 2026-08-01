@@ -6,8 +6,8 @@ tenantId=$(az account show --subscription "$subscriptionId" --query tenantId --o
 
 # ACR
 acrName="charliliacr"
-acrResourceGroupName="aks-foundry"
-location="westus"
+acrResourceGroupName="charlili-rg"
+location="eastus2"
 attachAcr=true
 imageName="mychatbot"
 tag="v1"
@@ -21,7 +21,7 @@ federatedIdentityName="myFedIdentity"
 
 # Microsoft Foundry
 foundryName="charlili-foundry"
-foundryResourceGroupName="aks-foundry"
+foundryResourceGroupName="charlili-rg"
 foundryEndpoint="https://$foundryName.services.ai.azure.com/models"
 foundryModel="gpt-5.4-mini"
 foundryModelVersion="2026-03-17"
@@ -31,17 +31,15 @@ foundrySkuCapacity=10
 
 # AKS Cluster
 aksClusterName="charlili-aks"
-aksResourceGroupName="aks-foundry"
+aksResourceGroupName="charlili-rg"
 aksKubeConfigPath="/tmp/kubeconfig"
-aksNodeVmSize="Standard_D2s_v5"
-aksNodeCount=4
 
 # Chatbot Application
 namespace="default"
-serviceAccountName="workload-identity-sa"
+serviceAccountName="wi-sa"
 deploymentTemplate="deployment.yaml"
 serviceTemplate="service.yaml"
 
 # Chatbot argument
-title="Chatbot running on Azure Kubernetes Service, powered by Microsoft Foundry"
+title="Chatbot running on AKS Automatic, powered by Microsoft Foundry"
 temperature="0.5"
