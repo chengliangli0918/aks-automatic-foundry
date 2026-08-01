@@ -8,9 +8,8 @@ docker run -it \
   --rm \
   -p 8080:8080 \
   -e TEMPERATURE=$temperature \
-  -e AZURE_OPENAI_BASE=$openAiBase \
-  -e AZURE_OPENAI_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  -e AZURE_OPENAI_MODEL=$openAiModel \
-  -e AZURE_OPENAI_DEPLOYMENT=$openAiDeployment \
+  -e MODEL_ENDPOINT=$foundryEndpoint \
+  -e MODEL_DEPLOYMENT=$foundryDeployment \
+  -v "$HOME/.azure:/root/.azure:ro" \
   --name $containerName \
   $imageName:$tag

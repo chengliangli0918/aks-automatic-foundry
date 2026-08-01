@@ -3,12 +3,20 @@
 # Variables
 source ./set-variables.sh
 
-echo "Delete and purge Azure OpenAI '$openAiName' in the '$openAiResourceGroupName' resource group..."
+echo "Delete and purge Microsoft Foundry '$foundryName' in the '$foundryResourceGroupName' resource group..."
 
-az cognitiveservices account delete -n $openAiName -g $openAiResourceGroupName
-az cognitiveservices account purge -n $openAiName -g $openAiResourceGroupName -l $location
+az cognitiveservices account delete -n "$foundryName" -g "$foundryResourceGroupName" --subscription "$subscriptionId"
+az cognitiveservices account purge -n "$foundryName" -g "$foundryResourceGroupName" -l "$location" --subscription "$subscriptionId"
 
-echo "Delete other Azure resources in other resource groups..."
-az group delete -g $openAiResourceGroupName -y --no-wait
-az group delete -g $acrResourceGroupName -y --no-wait
-az group delete -g $aksResourceGroupName -y --no-wait
+echo "Delete resource groups created by this sample..."
+declare -A deletedGroups
+for resourceGroup in "$foundryResourceGroupName" "$acrResourceGroupName" "$aksResourceGroupName"; do
+	if [[ -z ${deletedGroups[$resourceGroup]+x} ]]; then
+		az group delete \
+			--name "$resourceGroup" \
+			--subscription "$subscriptionId" \
+			--yes \
+			--no-wait
+		deletedGroups[$resourceGroup]=1
+	fi
+done

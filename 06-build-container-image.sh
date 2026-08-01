@@ -3,5 +3,10 @@
 # Variables
 source ./set-variables.sh
 
-# Build the docker image
-docker build -t $imageName:$tag -f Dockerfile .
+# Build and push the image in Azure Container Registry without requiring local Docker.
+az acr build \
+	--registry "$acrName" \
+	--image "$imageName:$tag" \
+	--file Dockerfile \
+	--subscription "$subscriptionId" \
+	.
