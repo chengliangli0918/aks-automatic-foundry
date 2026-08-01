@@ -18,7 +18,11 @@ description: Provision AKS Automatic and Microsoft Foundry model serving, then c
 
 This sample provisions an AKS Automatic cluster, a Microsoft Foundry resource with a chat model deployment, and a Streamlit chatbot. AKS Automatic provides a managed cluster configuration with node provisioning, scaling, and workload identity enabled by default. The pod exchanges its projected Kubernetes service-account token for a Microsoft Entra token; no model API key is stored in Kubernetes.
 
-The configured subscription is `c582d154-33c4-47e4-a3c2-0632d20b12eb`, and resources are created in `eastus2` under `charlili-rg`. Resource names, location, model, and capacity are defined in `set-variables.sh`. Foundry account and registry names are globally unique, so change them if the configured names are unavailable.
+The same container deployment, workload identity, and autoscaling foundation can also host MCP servers and AI agents that call Microsoft Foundry from AKS Automatic. Dedicated MCP server and agent samples are coming soon.
+
+![Microsoft Foundry chatbot running on AKS Automatic alongside healthy Kubernetes services, nodes, and pods](images/mychatbot-on-aks-using-foundry.png)
+
+The sample is configured to use subscription `c582d154-33c4-47e4-a3c2-0632d20b12eb` and create resources in `westus3` under `charlili-rg`. Resource names, location, model, and capacity are defined in `set-variables.sh`. Foundry account and container registry names are globally unique, so change them if the configured names are unavailable.
 
 ## Prerequisites
 
@@ -27,7 +31,7 @@ The configured subscription is `c582d154-33c4-47e4-a3c2-0632d20b12eb`, and resou
 - `kubectl` and `yq`
 - Azure AI model access and quota for the model, region, SKU, and capacity configured in `set-variables.sh`
 
-Local Docker is not required. Script `06` uses an Azure Container Registry cloud build to build and push the image. Docker is needed only for the optional local `debug-mychatbot.sh` workflow.
+Local Docker is not required. The `06-build-container-image.sh` script uses an Azure Container Registry cloud build to build and push the image. Docker is needed only for the optional local `debug-mychatbot.sh` workflow.
 
 ## Deploy with Microsoft Foundry
 
@@ -44,7 +48,7 @@ Run the scripts from the repository root in this order:
 ./08-deploy-mychatbot.sh
 ```
 
-Script `01` creates the cluster with the AKS Automatic SKU and disables SSH access. AKS Automatic selects and manages compute capacity rather than using a fixed node VM size or node count from this repository. Scripts `04` and `05` connect the Kubernetes service account to a user-assigned managed identity and authorize it to call Foundry.
+The `01-create-aks-cluster.sh` script creates the cluster with the AKS Automatic SKU and disables SSH access. AKS Automatic selects and manages compute capacity rather than using a fixed node VM size or node count defined in this repository. The `04-create-managed-identity.sh` and `05-create-service-account.sh` scripts connect the Kubernetes service account to a user-assigned managed identity and authorize it to call Foundry.
 
 Get the public endpoint after the load balancer is ready:
 
@@ -53,9 +57,9 @@ export KUBECONFIG=/tmp/kubeconfig
 kubectl get service mychatbot --namespace default --watch
 ```
 
-Open the external IP over HTTP. Use `debug-mychatbot.sh` to run the image locally with credentials from the host's Azure CLI cache.
+Open the external IP address in a browser over HTTP. Use `debug-mychatbot.sh` to run the image locally with credentials from the host's Azure CLI cache.
 
-The setup creates an `AIServices` Foundry resource, deploys `gpt-5.4-mini`, assigns the workload identity the `Cognitive Services User` role, and calls the Foundry `/models` endpoint with `azure-ai-inference`.
+The setup creates an `AIServices` Foundry resource, deploys `gpt-5.4-mini`, and assigns the `Cognitive Services User` role to the workload identity. The deployed chatbot calls the Foundry `/models` endpoint by using `azure-ai-inference`.
 
 ## Cleanup
 

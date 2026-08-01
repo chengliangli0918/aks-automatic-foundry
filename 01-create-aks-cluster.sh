@@ -28,7 +28,8 @@ if [[ $? != 0 ]]; then
     --location $location \
     --subscription $subscriptionId \
     --sku automatic \
-    --no-ssh-access 1>/dev/null
+    --enable-hosted-system \
+    --no-ssh-key 1>/dev/null
 
   if [[ $? == 0 ]]; then
     echo "AKS '$aksClusterName' successfully created in the '$aksResourceGroupName' resource group"

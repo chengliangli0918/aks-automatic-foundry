@@ -7,7 +7,7 @@ tenantId=$(az account show --subscription "$subscriptionId" --query tenantId --o
 # ACR
 acrName="charliliacr"
 acrResourceGroupName="charlili-rg"
-location="eastus2"
+location="westus3"
 attachAcr=true
 imageName="mychatbot"
 tag="v1"

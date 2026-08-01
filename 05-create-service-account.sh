@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # Variables for the user-assigned managed identity
 source ./set-variables.sh
 
@@ -25,8 +27,9 @@ else
   # Retrieve the resource id of the user-assigned managed identity
   echo "Retrieving clientId for '$managedIdentityName' managed identity..."
   managedIdentityClientId=$(az identity show \
-    --name $managedIdentityName \
-    --resource-group $aksResourceGroupName \
+    --name "$managedIdentityName" \
+    --resource-group "$aksResourceGroupName" \
+    --subscription "$subscriptionId" \
     --query clientId \
     --output tsv)
 
@@ -62,19 +65,19 @@ kubectl get sa $serviceAccountName -n $namespace -o yaml
 # Check if the federated identity credential already exists
 echo "Checking if '$federatedIdentityName' federated identity credential actually exists in the '$aksResourceGroupName' resource group..."
 
-az identity federated-credential show \
-  --name $federatedIdentityName \
-  --resource-group $aksResourceGroupName \
-  --identity-name $managedIdentityName &>/dev/null
-
-if [[ $? != 0 ]]; then
+if ! az identity federated-credential show \
+  --name "$federatedIdentityName" \
+  --resource-group "$aksResourceGroupName" \
+  --identity-name "$managedIdentityName" \
+  --subscription "$subscriptionId" &>/dev/null; then
   echo "No '$federatedIdentityName' federated identity credential actually exists in the '$aksResourceGroupName' resource group"
 
   # Get the OIDC Issuer URL
   aksOidcIssuerUrl="$(az aks show \
     --only-show-errors \
-    --name $aksClusterName \
-    --resource-group $aksResourceGroupName \
+    --name "$aksClusterName" \
+    --resource-group "$aksResourceGroupName" \
+    --subscription "$subscriptionId" \
     --query oidcIssuerProfile.issuerUrl \
     --output tsv)"
 
@@ -87,11 +90,12 @@ if [[ $? != 0 ]]; then
 
   # Establish the federated identity credential between the managed identity, the service account issuer, and the subject.
   az identity federated-credential create \
-    --name $federatedIdentityName \
-    --identity-name $managedIdentityName \
-    --resource-group $aksResourceGroupName \
-    --issuer $aksOidcIssuerUrl \
-    --subject system:serviceaccount:$namespace:$serviceAccountName
+    --name "$federatedIdentityName" \
+    --identity-name "$managedIdentityName" \
+    --resource-group "$aksResourceGroupName" \
+    --subscription "$subscriptionId" \
+    --issuer "$aksOidcIssuerUrl" \
+    --subject "system:serviceaccount:$namespace:$serviceAccountName"
 
   if [[ $? == 0 ]]; then
     echo "'$federatedIdentityName' federated identity credential successfully created in the '$aksResourceGroupName' resource group"
