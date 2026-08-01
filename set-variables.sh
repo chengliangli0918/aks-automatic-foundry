@@ -34,7 +34,7 @@ aksClusterName="charlili-aks"
 aksResourceGroupName="aks-foundry"
 aksKubeConfigPath="/tmp/kubeconfig"
 aksNodeVmSize="Standard_D2s_v5"
-aksNodeCount=1
+aksNodeCount=4
 
 # Chatbot Application
 namespace="default"

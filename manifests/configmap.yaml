@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: myworkflow-config
-  namespace: namespace-workflow-1765396823478
-  labels:
-    app.kubernetes.io/name: myworkflow
-    kubernetes.azure.com/generator: devhub
-data:
