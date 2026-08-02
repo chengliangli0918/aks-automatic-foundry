@@ -22,7 +22,6 @@ spec:
         azure.workload.identity/use: "true"
         prometheus.io/scrape: "true"
     spec:
-      serviceAccountName: workload-identity-sa
       topologySpreadConstraints:
       - maxSkew: 1
         topologyKey: topology.kubernetes.io/zone

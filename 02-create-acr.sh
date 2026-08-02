@@ -37,11 +37,6 @@ if [[ $? != 0 ]]; then
     exit
   fi
 
-  az acr update \
-    --name $acrName \
-    --resource-group $acrResourceGroupName \
-    --subscription $subscriptionId \
-    --anonymous-pull-enabled 1>/dev/null
 else
   echo "ACR '$acrName' already exists in the '$acrResourceGroupName' resource group"
 fi
