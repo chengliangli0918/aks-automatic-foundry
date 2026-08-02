@@ -68,3 +68,7 @@ The setup creates an `AIServices` Foundry resource, deploys `gpt-5.4-mini`, and 
 ```
 
 The cleanup script deletes the Foundry resource and the resource groups configured in `set-variables.sh`. Review it before running if those groups contain resources not created by this sample.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
