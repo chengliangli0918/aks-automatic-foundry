@@ -16,6 +16,8 @@ description: Provision AKS Automatic and Microsoft Foundry model serving, then e
 
 # MCP server on AKS Automatic, backed by Microsoft Foundry
 
+[Repository overview](../README.md) | [Chatbot sample](../mychatbot-foundry/README.md)
+
 This sample provisions an AKS Automatic cluster, a Microsoft Foundry resource with a chat model deployment, and a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server. AKS Automatic provides a managed cluster configuration with node provisioning, scaling, and workload identity enabled by default. The pod exchanges its projected Kubernetes service-account token for a Microsoft Entra token; no model API key is stored in Kubernetes.
 
 The MCP server exposes a single tool, `ask_foundry`, that forwards a prompt to the Microsoft Foundry model deployment and returns the response. It uses the [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) `FastMCP` server with the streamable-HTTP transport, so any MCP-compatible client or agent framework can call it over the network.
@@ -37,9 +39,10 @@ Local Docker is not required. The `06-build-container-image.sh` script uses an A
 
 ## Deploy with Microsoft Foundry
 
-Run the scripts from this directory in order:
+From the repository root, enter this sample directory and run the scripts in order:
 
 ```bash
+cd mcp-server-foundry
 ./01-create-aks-cluster.sh
 ./02-create-acr.sh
 ./03-create-foundry.sh
