@@ -7,7 +7,7 @@ This repository contains deployable examples for running applications on Azure K
 | Sample | Experience | Network exposure |
 | --- | --- | --- |
 | [Microsoft Foundry chatbot](mychatbot-foundry/README.md) | Streamlit chat application backed by a Foundry model deployment | Public Kubernetes `LoadBalancer` service |
-| [Microsoft Foundry MCP server](mcp-server-foundry/README.md) | Streamable-HTTP MCP server exposing the `ask_foundry` tool | Private Kubernetes `ClusterIP` service accessed with port forwarding |
+| [Microsoft Foundry MCP server](mcp-server-foundry/README.md) | Streamable-HTTP MCP server exposing the `ask_foundry` tool | Public Kubernetes `LoadBalancer` service |
 
 Each sample provisions its own AKS cluster, Azure Container Registry, Foundry resource and model deployment, managed identity, federated credential, container image, and Kubernetes workload. Resource names and Azure settings are defined independently in each sample's `set-variables.sh` file.
 

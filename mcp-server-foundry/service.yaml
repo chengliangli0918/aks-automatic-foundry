@@ -5,8 +5,7 @@ metadata:
   labels:
     app: mcpserver
 spec:
-  # ClusterIP keeps the unauthenticated MCP endpoint off the public internet; use kubectl port-forward to reach it.
-  type: ClusterIP
+  type: LoadBalancer
   ports:
   - protocol: TCP
     port: 80

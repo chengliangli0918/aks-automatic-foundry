@@ -22,11 +22,15 @@ This sample provisions an AKS Automatic cluster, a Microsoft Foundry resource wi
 
 The MCP server exposes a single tool, `ask_foundry`, that forwards a prompt to the Microsoft Foundry model deployment and returns the response. It uses the [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) `FastMCP` server with the streamable-HTTP transport, so any MCP-compatible client or agent framework can call it over the network.
 
+![MCP Inspector client calling an MCP server hosted on AKS Automatic using Microsoft Foundry](images/mcp-server-hosted-on-aks-automatic-using-foundry.png)
+
+*Demo: MCP Inspector is the client connected to the MCP server running on AKS Automatic.*
+
 The sample is configured to use subscription `8ecadfc9-d1a3-4ea4-b844-0d9f87e4d7c8` and create resources in `westus3` under `charlili-mcp-rg`. Resource names, location, model, and capacity are defined in `set-variables.sh`. Foundry account and container registry names are globally unique, so change them if the configured names are unavailable.
 
 ## Security note
 
-The MCP endpoint has no authentication or authorization of its own, and `ask_foundry` sends whatever prompt it receives to the Foundry model deployment. To keep it out of reach of the public internet, `service.yaml` deploys it as a `ClusterIP` service instead of a `LoadBalancer`. Use `kubectl port-forward` (or an authenticated ingress/API gateway of your own) to reach it. Add authentication and input validation before exposing this pattern beyond a trusted network.
+The MCP endpoint has no authentication or authorization of its own, and `ask_foundry` sends whatever prompt it receives to the Foundry model deployment. The `LoadBalancer` service exposes it to the public internet. Restrict inbound access and add authentication, TLS, rate limiting, and input validation before using this pattern beyond a controlled demonstration.
 
 ## Prerequisites
 
@@ -57,14 +61,14 @@ The `01-create-aks-cluster.sh` script creates the cluster with the AKS Automatic
 
 ## Call the MCP server
 
-Forward the service to your workstation, since it's deployed as `ClusterIP`:
+Wait for AKS to assign a public IP address:
 
 ```bash
 export KUBECONFIG=/tmp/kubeconfig-mcp
-kubectl port-forward service/mcpserver 8080:80
+kubectl get service mcpserver --namespace default --watch
 ```
 
-The MCP endpoint is now reachable at `http://127.0.0.1:8080/mcp` using the streamable-HTTP transport. Point an MCP client (for example, the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) or an agent framework with MCP support) at that URL and call the `ask_foundry` tool with a `prompt` argument.
+When `EXTERNAL-IP` is populated, the streamable-HTTP endpoint is available at `http://<EXTERNAL-IP>/mcp`. This sample uses [MCP Inspector](https://github.com/modelcontextprotocol/inspector) as its MCP client. Start Inspector with `npx @modelcontextprotocol/inspector`, select the streamable-HTTP transport, connect to the endpoint, and call the `ask_foundry` tool with a `prompt` argument.
 
 Use `debug-mcpserver.sh` to run the image locally with credentials from the host's Azure CLI cache before deploying it.
 
