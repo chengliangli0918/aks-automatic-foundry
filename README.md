@@ -18,7 +18,7 @@ description: Provision AKS Automatic and Microsoft Foundry model serving, then c
 
 This sample provisions an AKS Automatic cluster, a Microsoft Foundry resource with a chat model deployment, and a Streamlit chatbot. AKS Automatic provides a managed cluster configuration with node provisioning, scaling, and workload identity enabled by default. The pod exchanges its projected Kubernetes service-account token for a Microsoft Entra token; no model API key is stored in Kubernetes.
 
-The same container deployment, workload identity, and autoscaling foundation can also host MCP servers and AI agents that call Microsoft Foundry from AKS Automatic. Dedicated MCP server and agent samples are coming soon.
+The same container deployment, workload identity, and autoscaling foundation can also host MCP servers and AI agents that call Microsoft Foundry from AKS Automatic. See [mcp-server-foundry](mcp-server-foundry/README.md) for a sample that hosts an MCP server backed by Microsoft Foundry. Dedicated AI agent samples are coming soon.
 
 ![Microsoft Foundry chatbot running on AKS Automatic alongside healthy Kubernetes services, nodes, and pods](images/mychatbot-on-aks-using-foundry.png)
 
